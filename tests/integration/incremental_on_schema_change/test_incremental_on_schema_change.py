@@ -78,11 +78,11 @@ class TestApacheSparkAppend(TestIncrementalOnSchemaChange):
     # only 'ignore' and 'fail' are supported
 
     @use_profile('apache_spark')
-    def test__apache_spark__run_incremental_ignore(self):
+    def test__apache_spark_custom__run_incremental_ignore(self):
         self.run_incremental_ignore()
 
     @use_profile('apache_spark')
-    def test__apache_spark__run_incremental_fail_on_schema_change(self):
+    def test__apache_spark_custom__run_incremental_fail_on_schema_change(self):
         self.run_incremental_fail_on_schema_change()
 
 
@@ -103,11 +103,11 @@ class TestApacheSparkInsertOverwrite(TestIncrementalOnSchemaChange):
     # only 'ignore' and 'fail' are supported
 
     @use_profile('apache_spark')
-    def test__apache_spark__run_incremental_ignore(self):
+    def test__apache_spark_custom__run_incremental_ignore(self):
         self.run_incremental_ignore()
 
     @use_profile('apache_spark')
-    def test__apache_spark__run_incremental_fail_on_schema_change(self):
+    def test__apache_spark_custom__run_incremental_fail_on_schema_change(self):
         self.run_incremental_fail_on_schema_change()
 
 

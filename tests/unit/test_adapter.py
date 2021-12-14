@@ -5,7 +5,7 @@ import dbt.flags as flags
 from dbt.exceptions import RuntimeException
 from agate import Row
 from pyhive import hive
-from dbt.adapters.spark import SparkAdapter, SparkRelation
+from dbt.adapters.spark_custom import SparkAdapter, SparkRelation
 from .utils import config_from_parts_or_dicts
 
 
@@ -138,7 +138,7 @@ class TestSparkAdapter(unittest.TestCase):
                 thrift_transport.path, '/sql/protocolv1/o/0123456789/01234-23423-coffeetime')
 
         # with mock.patch.object(hive, 'connect', new=hive_http_connect):
-        with mock.patch('dbt.adapters.spark.connections.hive.connect', new=hive_http_connect):
+        with mock.patch('dbt.adapters.spark_custom.connections.hive.connect', new=hive_http_connect):
             connection = adapter.acquire_connection('dummy')
             connection.handle  # trigger lazy-load
 
@@ -222,7 +222,7 @@ class TestSparkAdapter(unittest.TestCase):
             self.assertIn(
                 'httppath=/sql/protocolv1/o/0123456789/01234-23423-coffeetime;', connection_str.lower())  # noqa
 
-        with mock.patch('dbt.adapters.spark.connections.pyodbc.connect', new=pyodbc_connect):  # noqa
+        with mock.patch('dbt.adapters.spark_custom.connections.pyodbc.connect', new=pyodbc_connect):  # noqa
             connection = adapter.acquire_connection('dummy')
             connection.handle  # trigger lazy-load
 
@@ -247,7 +247,7 @@ class TestSparkAdapter(unittest.TestCase):
             self.assertIn(
                 'httppath=/sql/1.0/endpoints/012342342393920a;', connection_str.lower())  # noqa
 
-        with mock.patch('dbt.adapters.spark.connections.pyodbc.connect', new=pyodbc_connect):  # noqa
+        with mock.patch('dbt.adapters.spark_custom.connections.pyodbc.connect', new=pyodbc_connect):  # noqa
             connection = adapter.acquire_connection('dummy')
             connection.handle  # trigger lazy-load
 

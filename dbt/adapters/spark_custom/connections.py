@@ -6,7 +6,7 @@ from dbt.adapters.sql import SQLConnectionManager
 from dbt.contracts.connection import ConnectionState
 from dbt.events import AdapterLogger
 from dbt.utils import DECIMALS
-from dbt.adapters.spark import __version__
+from dbt.adapters.spark_custom import __version__
 
 try:
     from TCLIService.ttypes import TOperationState as ThriftState
@@ -22,6 +22,8 @@ except ImportError:
     pyodbc = None
 from datetime import datetime
 import sqlparams
+import subprocess
+import pandas as pd
 
 from hologram.helpers import StrEnum
 from dataclasses import dataclass, field
@@ -55,6 +57,7 @@ class SparkConnectionMethod(StrEnum):
     THRIFT = 'thrift'
     HTTP = 'http'
     ODBC = 'odbc'
+    SPARK_SUBMIT = 'spark-submit'
 
 
 @dataclass
@@ -135,7 +138,7 @@ class SparkCredentials(Credentials):
 
     @property
     def type(self):
-        return 'spark'
+        return 'spark_custom'
 
     @property
     def unique_field(self):
@@ -272,9 +275,116 @@ class PyodbcConnectionWrapper(PyhiveConnectionWrapper):
             sql, bindings = query.format(sql, bindings)
             self._cursor.execute(sql, *bindings)
 
+class SparkSubmitConnectionWrapper(object):
+    """Wrap a Spark connection in a way that no-ops transactions"""
+    # https://forums.databricks.com/questions/2157/in-apache-spark-sql-can-we-roll-back-the-transacti.html  # noqa
+
+    def __init__(self):
+        print('init spark submit connection')
+        self._cursor = None
+        self.result_df = None
+        self.function_call = []
+
+    def cursor(self):
+        self.function_call.append('cursor')
+        logger.info("NotImplemented: cursor")
+        print(self.function_call)
+        return self
+
+    def cancel(self):
+        self.function_call.append('cancel')
+        logger.info("NotImplemented: cancel")
+        print(self.function_call)
+
+    def close(self):
+        self.function_call.append('close')
+        logger.info("NotImplemented: close")
+        print(self.function_call)
+
+
+    def rollback(self, *args, **kwargs):
+        self.function_call.append('rollback')
+        logger.info("NotImplemented: rollback")
+        logger.info(f"{str(args)} {str(kwargs)}")
+        print(self.function_call)
+
+
+    def fetchall(self):
+        self.function_call.append('fetchall')
+        logger.info("NotImplemented: fetchall")
+        print(self.function_call)
+        return ['lineman_beta', 'lineman']
+
+    def execute(self, sql, bindings=None):
+        self.function_call.append('execute')
+        logger.info(f"NotImplemented: execute {sql} {bindings}")
+        if bindings is None:
+            self.result_df = self.spark_submit_run_sql(sql)
+        else:
+            logger.debug(f"NotImplemented: execute with bindings")
+            raise Exception(f"NotImplemented: execute with bindings")
+
+        print(self.function_call)
+
+    def spark_submit_run_sql(
+        sql,
+        spark_submit_path="/opt/spark/bin/spark-submit",
+        pyspark_filepath="/home1/irteamsu/kawin/dbt-spark-submit-adapter/main.py",
+        result_filepath="./result.parquet",
+    ):
+        master = ["--master", "yarn"]
+        deploy_mode = ["--deploy-mode", "client"]
+        conf = [
+            "--conf",
+            "spark.pyspark.driver.python=/usr/bin/python3.6",
+            "--conf",
+            "spark.sql.execution.arrow.pyspark.enabled=true",
+            "--conf",
+            "spark.sql.execution.arrow.enabled=true",
+            "--conf",
+            "spark.driver.memoryOverhead=1g",
+            "--conf",
+            "spark.executor.memoryOverhead=1g",
+            "--conf",
+            '"spark.driver.extraJavaOptions=-Duser.timezone=UTC -Dhdp.version=3.1.5.156-1"',
+            "--conf",
+            '"spark.executor.extraJavaOptions=-Duser.timezone=UTC -Dhdp.version=3.1.5.156-1"',
+            "--packages",
+            "com.linecorp.datachain:datachain-hive-tools-shadepb3:+,com.linecorp.datachain:datachain-protocol-shadepb3:+,org.mongodb.spark:mongo-spark-connector_2.11:2.4.1,org.postgresql:postgresql:42.2.4",
+            "--repositories",
+            "http://repo.navercorp.jp/content/groups/releases",
+            "--executor-memory",
+            "6g",
+            "--driver-memory",
+            "3G",
+        ]
+
+        command_list = [ 
+            spark_submit_path,
+            *master,
+            *deploy_mode,
+            *conf,
+            pyspark_filepath,
+            "--sql", sql,
+            "--result_path", result_filepath,
+        ]
+        print("runing subprocess")
+        process = subprocess.run(command_list, check=True)
+
+        if process.returncode == 0 :
+            return pd.read_parquet(result_filepath)
+        else:
+            raise Exception("fail to run sub process")
+
+    @property
+    def description(self):
+        self.function_call.append('execute')
+        print(self.function_call)
+
+        return [["database", 'A', 'B', 'C']]
 
 class SparkConnectionManager(SQLConnectionManager):
-    TYPE = 'spark'
+    TYPE = 'spark_custom'
 
     SPARK_CLUSTER_HTTP_PATH = "/sql/protocolv1/o/{organization}/{cluster}"
     SPARK_SQL_ENDPOINT_HTTP_PATH = "/sql/1.0/endpoints/{endpoint}"
@@ -438,6 +548,11 @@ class SparkConnectionManager(SQLConnectionManager):
 
                     conn = pyodbc.connect(connection_str, autocommit=True)
                     handle = PyodbcConnectionWrapper(conn)
+                elif creds.method == SparkConnectionMethod.SPARK_SUBMIT:
+                    logger.info('edit success')
+                    logger.info('edit success here') 
+                    handle = SparkSubmitConnectionWrapper()
+                    logger.info('handle not error') 
                 else:
                     raise dbt.exceptions.DbtProfileError(
                         f"invalid credential method: {creds.method}"

@@ -32,7 +32,7 @@ class TestSparkMacros(unittest.TestCase):
 
     def test_macros_create_table_as(self):
         template = self.__get_template('adapters.sql')
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1').strip()
 
         self.assertEqual(sql, "create table my_table as select 1")
 
@@ -40,11 +40,11 @@ class TestSparkMacros(unittest.TestCase):
         template = self.__get_template('adapters.sql')
 
         self.config['file_format'] = 'delta'
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1').strip()
         self.assertEqual(sql, "create or replace table my_table using delta as select 1")
 
         self.config['file_format'] = 'hudi'
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1').strip()
         self.assertEqual(sql, "create table my_table using hudi as select 1")
 
     def test_macros_create_table_as_options(self):
@@ -52,11 +52,11 @@ class TestSparkMacros(unittest.TestCase):
 
         self.config['file_format'] = 'delta'
         self.config['options'] = {"compression": "gzip"}
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1').strip()
         self.assertEqual(sql, 'create or replace table my_table using delta options (compression "gzip" ) as select 1')
 
         self.config['file_format'] = 'hudi'
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1').strip()
         self.assertEqual(sql, 'create table my_table using hudi options (compression "gzip" ) as select 1')
 
     def test_macros_create_table_as_hudi_options(self):
@@ -64,33 +64,33 @@ class TestSparkMacros(unittest.TestCase):
 
         self.config['file_format'] = 'hudi'
         self.config['unique_key'] = 'id'
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1 as id').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1 as id').strip()
         self.assertEqual(sql, 'create table my_table using hudi options (primaryKey "id" ) as select 1 as id')
 
         self.config['file_format'] = 'hudi'
         self.config['unique_key'] = 'id'
         self.config['options'] = {'primaryKey': 'id'}
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1 as id').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1 as id').strip()
         self.assertEqual(sql, 'create table my_table using hudi options (primaryKey "id" ) as select 1 as id')
 
         self.config['file_format'] = 'hudi'
         self.config['unique_key'] = 'uuid'
         self.config['options'] = {'primaryKey': 'id'}
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1 as id')
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1 as id')
         self.assertIn('mock.raise_compiler_error()', sql)
 
     def test_macros_create_table_as_partition(self):
         template = self.__get_template('adapters.sql')
 
         self.config['partition_by'] = 'partition_1'
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1').strip()
         self.assertEqual(sql, "create table my_table partitioned by (partition_1) as select 1")
 
     def test_macros_create_table_as_partitions(self):
         template = self.__get_template('adapters.sql')
 
         self.config['partition_by'] = ['partition_1', 'partition_2']
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1').strip()
         self.assertEqual(sql,
                          "create table my_table partitioned by (partition_1,partition_2) as select 1")
 
@@ -99,7 +99,7 @@ class TestSparkMacros(unittest.TestCase):
 
         self.config['clustered_by'] = 'cluster_1'
         self.config['buckets'] = '1'
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1').strip()
         self.assertEqual(sql, "create table my_table clustered by (cluster_1) into 1 buckets as select 1")
 
     def test_macros_create_table_as_clusters(self):
@@ -107,14 +107,14 @@ class TestSparkMacros(unittest.TestCase):
 
         self.config['clustered_by'] = ['cluster_1', 'cluster_2']
         self.config['buckets'] = '1'
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1').strip()
         self.assertEqual(sql, "create table my_table clustered by (cluster_1,cluster_2) into 1 buckets as select 1")
 
     def test_macros_create_table_as_location(self):
         template = self.__get_template('adapters.sql')
 
         self.config['location_root'] = '/mnt/root'
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1').strip()
         self.assertEqual(sql, "create table my_table location '/mnt/root/my_table' as select 1")
 
     def test_macros_create_table_as_comment(self):
@@ -122,7 +122,7 @@ class TestSparkMacros(unittest.TestCase):
 
         self.config['persist_docs'] = {'relation': True}
         self.default_context['model'].description = 'Description Test'
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1').strip()
         self.assertEqual(sql, "create table my_table comment 'Description Test' as select 1")
 
     def test_macros_create_table_as_all(self):
@@ -136,14 +136,14 @@ class TestSparkMacros(unittest.TestCase):
         self.config['persist_docs'] = {'relation': True}
         self.default_context['model'].description = 'Description Test'
 
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1').strip()
         self.assertEqual(
             sql,
             "create or replace table my_table using delta partitioned by (partition_1,partition_2) clustered by (cluster_1,cluster_2) into 1 buckets location '/mnt/root/my_table' comment 'Description Test' as select 1"
         )
 
         self.config['file_format'] = 'hudi'
-        sql = self.__run_macro(template, 'spark__create_table_as', False, 'my_table', 'select 1').strip()
+        sql = self.__run_macro(template, 'spark_custom__create_table_as', False, 'my_table', 'select 1').strip()
         self.assertEqual(
             sql,
             "create table my_table using hudi partitioned by (partition_1,partition_2) clustered by (cluster_1,cluster_2) into 1 buckets location '/mnt/root/my_table' comment 'Description Test' as select 1"

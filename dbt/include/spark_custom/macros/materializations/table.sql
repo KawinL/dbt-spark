@@ -1,4 +1,4 @@
-{% materialization table, adapter = 'spark' %}
+{% materialization table, adapter = 'spark_custom' %}
 
   {%- set identifier = model['alias'] -%}
 

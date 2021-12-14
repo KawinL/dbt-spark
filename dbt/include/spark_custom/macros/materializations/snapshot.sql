@@ -1,4 +1,4 @@
-{% macro spark__snapshot_hash_arguments(args) -%}
+{% macro spark_custom__snapshot_hash_arguments(args) -%}
     md5({%- for arg in args -%}
         coalesce(cast({{ arg }} as string ), '')
         {% if not loop.last %} || '|' || {% endif %}
@@ -6,13 +6,13 @@
 {%- endmacro %}
 
 
-{% macro spark__snapshot_string_as_time(timestamp) -%}
+{% macro spark_custom__snapshot_string_as_time(timestamp) -%}
     {%- set result = "to_timestamp('" ~ timestamp ~ "')" -%}
     {{ return(result) }}
 {%- endmacro %}
 
 
-{% macro spark__snapshot_merge_sql(target, source, insert_cols) -%}
+{% macro spark_custom__snapshot_merge_sql(target, source, insert_cols) -%}
 
     merge into {{ target }} as DBT_INTERNAL_DEST
     using {{ source }} as DBT_INTERNAL_SOURCE
@@ -49,12 +49,12 @@
 {% endmacro %}
 
 
-{% macro spark__post_snapshot(staging_relation) %}
+{% macro spark_custom__post_snapshot(staging_relation) %}
     {% do adapter.drop_relation(staging_relation) %}
 {% endmacro %}
 
 
-{% macro spark__create_columns(relation, columns) %}
+{% macro spark_custom__create_columns(relation, columns) %}
     {% if columns|length > 0 %}
     {% call statement() %}
       alter table {{ relation }} add columns (
@@ -67,7 +67,7 @@
 {% endmacro %}
 
 
-{% materialization snapshot, adapter='spark' %}
+{% materialization snapshot, adapter='spark_custom' %}
   {%- set config = model['config'] -%}
 
   {%- set target_table = model.get('alias', model.get('name')) -%}

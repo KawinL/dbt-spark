@@ -11,9 +11,9 @@ import dbt.exceptions
 from dbt.adapters.base import AdapterConfig
 from dbt.adapters.base.impl import catch_as_completed
 from dbt.adapters.sql import SQLAdapter
-from dbt.adapters.spark import SparkConnectionManager
-from dbt.adapters.spark import SparkRelation
-from dbt.adapters.spark import SparkColumn
+from dbt.adapters.spark_custom import SparkConnectionManager
+from dbt.adapters.spark_custom import SparkRelation
+from dbt.adapters.spark_custom import SparkColumn
 from dbt.adapters.base import BaseRelation
 from dbt.clients.agate_helper import DEFAULT_TYPE_TESTER
 from dbt.events import AdapterLogger
@@ -142,6 +142,8 @@ class SparkAdapter(SQLAdapter):
                 return []
 
         relations = []
+        import pandas as pd
+        results = pd.read_csv("/Users/kawin/Downloads/20210922-0908_20211203_114533.csv").values
         for row in results:
             if len(row) != 4:
                 raise dbt.exceptions.RuntimeException(
