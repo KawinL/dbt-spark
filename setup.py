@@ -31,7 +31,7 @@ with open(os.path.join(this_directory, 'README.md'), 'r', encoding='utf8') as f:
 # get this package's version from dbt/adapters/<name>/__version__.py
 def _get_plugin_version_dict():
     _version_path = os.path.join(
-        this_directory, 'dbt', 'adapters', 'spark', '__version__.py'
+        this_directory, 'dbt', 'adapters', 'spark_custom', '__version__.py'
     )
     _semver = r'''(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)'''
     _pre = r'''((?P<prekind>a|b|rc)(?P<pre>\d+))?'''
